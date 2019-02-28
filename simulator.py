@@ -17,6 +17,11 @@ import time
 import copy
 import traceback
 import player
+import team31
+import team58
+import player40
+import player40_1
+import player_final
 
 TIME = 24
 MAX_PTS = 86
@@ -36,7 +41,7 @@ class Random_Player():
 		#You have to implement the move function with the same signature as this
 		#Find the list of valid cells allowed
 		cells = board.find_valid_move_cells(old_move)
-		print(cells)
+		# print(cells)
 		return cells[random.randrange(len(cells))]
 
 class Manual_Player:
@@ -261,8 +266,14 @@ def gameplay(obj1, obj2):				#game simulator
 	pts1 = 0
 	pts2 = 0
 
-	game_board.print_board()
+	# game_board.print_board()
+	# game_board.update(old_move,(0,6,0),'x')
+	# game_board.update(old_move,(0,7,1),'x')
+	# game_board.update(old_move,(0,8,2),'x')
+	# game_board.update(old_move,(0,5,3),'o')
+	# old_move = (0,5,3)
 	signal.signal(signal.SIGALRM, handler)
+	flag = True
 	while(1):
 		#player 1 turn
 		p1_move, WINNER, MESSAGE, pts1, pts2, to_break, small_board_won = player_turn(game_board, old_move, obj1, "P1", "P2", fl1)
@@ -298,7 +309,8 @@ def gameplay(obj1, obj2):				#game simulator
 				break
 		
 			old_move = p2_move
-			game_board.print_board()		
+			game_board.print_board()
+		flag = False		
 
 	game_board.print_board()
 
@@ -364,12 +376,12 @@ if __name__ == '__main__':
 	obj2 = ''
 	option = sys.argv[1]	
 	if option == '1':
-		obj1 = Random_Player()
-		obj2 = player.Player_Cyber_Bot()
+		obj1 = player_final.Player_final()
+		obj2 = Random_Player()
 
 	elif option == '2':
-		obj1 = player.Player_Cyber_Bot()
-		obj2 = Manual_Player()
+		obj1 = team58.Team58()
+		obj2 = Random_Player()
 	elif option == '3':
 		obj1 = Manual_Player()
 		obj2 = Manual_Player()
