@@ -8,8 +8,8 @@ class Player_final:
     def __init__(self):
 
         self.default = (0,4,4)
-        self.max_depth = 4
-        self.Time_limit = 4.7
+        self.max_depth = 2
+        self.Time_limit = 5
         self.symbol = None
         self.count_block_win = {'p': 0,'o': 0}
         self.next_move = (0,0,0)
@@ -28,8 +28,8 @@ class Player_final:
         else:
             opponent_symbol = 'o'
 
-        # temp = gameboard.small_boards_status
-        # print(temp[0])
+        temp = gameboard.small_boards_status
+        print(temp[0])
 
         self.count_block_win['p'] = sum(blocks.count(player_symbol) for blocks in gameboard.small_boards_status[0])
         self.count_block_win['p'] += sum(blocks.count(player_symbol) for blocks in gameboard.small_boards_status[1])
@@ -44,7 +44,7 @@ class Player_final:
         self.toc = (time.time()-self.tic)
 
         prev_move = (0,0,0)
-        self.max_depth = 3
+        self.max_depth = 2
 
         while(self.toc < self.Time_limit):
             self.next_move = prev_move
@@ -62,62 +62,73 @@ class Player_final:
     def minimax(self, board, old_move, maxnode, player_flag, opponent_flag, depth, alpha, beta,best_board,best_row, best_col):
         if depth == self.max_depth:
             # print("in")
-            utility = self.get_utility(board,player_flag,opponent_flag)
-            # print(utility)
-            return (utility,best_board,best_row,best_col)
+            utility_gain = self.get_utility(board,player_flag,opponent_flag)
+            # print(utility_gain)
+            return (utility_gain,best_board,best_row,best_col)
 
         else:
 
             available_moves = board.find_valid_move_cells(old_move)
-            # random.shuffle(available_moves)
+            random.shuffle(available_moves)
             # print(available_moves)
 
             if len(available_moves) == 0:
-                utility = self.get_utility(board,player_flag,opponent_flag)
-                return (utility,best_board,best_row,best_col)
+                utility_gain = self.get_utility(board,player_flag,opponent_flag)
+                return (utility_gain,best_board,best_row,best_col)
 
             # print(depth)
             # counter = 0
             for move in available_moves:
+                # print(move)
                 # counter+=1
                 current_board = copy.deepcopy(board)
                 # print("papa\n")
-                # current_board.print_board()
                 # sign = player_flag
 
-                if maxnode:
-                    sign = player_flag
-                elif not maxnode:
+                
+                sign = player_flag
+                if not maxnode:
                     sign = opponent_flag
 
                 current_board.update(old_move,move,sign)
+                # current_board.print_board()
+
+                # if maxnode == True:
+                #     utility = self.minimax(current_board,move,False,player_flag,opponent_flag,depth+1,alpha,beta,best_board,best_row,best_col)
+                    
+                # else:
+                #     utility = self.minimax(current_board,move,True,player_flag,opponent_flag,depth+1,alpha,beta,best_board,best_row,best_col)
+                    
+
+                # print minnode
+
+                # utility = self.minimax(current_board,move,minnode,player_flag,opponent_flag,depth+1,alpha,beta,best_board,best_row,best_col)
 
                 if maxnode == True:
-                    minnode = False
-                else:
-                    minnode = True
+                    utility = self.minimax(current_board,move,False,player_flag,opponent_flag,depth+1,alpha,beta,best_board,best_row,best_col)
 
-                utility = self.minimax(current_board,move,minnode,player_flag,opponent_flag,depth+1,alpha,beta,best_board,best_row,best_col)
-
-                if maxnode == True:
                     if utility[0] > alpha:
                         alpha = utility[0]
                         best_board,best_row,best_col = (move[0],move[1],move[2])
                 else:
+                    utility = self.minimax(current_board,move,True,player_flag,opponent_flag,depth+1,alpha,beta,best_board,best_row,best_col)
+
                     if utility[0] < beta:
                         beta = utility[0]
                         best_board,best_row,best_col = (move[0],move[1],move[2])
-                
-                if alpha > beta:
+                # print(utility)
+                if alpha >= beta:
                     break
 
-                # if (time.time() - self.tic) > self.Time_limit:
-                #     return (utility,best_board,best_row,best_col)
+                if (time.time() - self.tic) > self.Time_limit:
+                    return (utility,best_board,best_row,best_col)
 
             if maxnode:
                 return (alpha,best_board,best_row,best_col)
             else:
                 return (beta,best_board,best_row,best_col)
+            # print(utility)
+            # return utility
 
 
 
@@ -126,11 +137,12 @@ class Player_final:
 
     def get_utility(self, board,player_flag, opponent_flag):
         gain = 0
+        temp_small = [item for sublist in board.small_boards_status for item in sublist]
 
-        player_curr = sum(blocks.count(player_flag) for blocks in board.small_boards_status)
-        opponent_curr = sum(blocks.count(opponent_flag) for blocks in board.small_boards_status)
+        player_curr = sum(blocks.count(player_flag) for blocks in temp_small)
+        opponent_curr = sum(blocks.count(opponent_flag) for blocks in temp_small)
 
-        # print(self.count_block_win['p'])
+        # print(self.count_block_win['p'],player_curr)
         if self.count_block_win['p'] < player_curr and self.count_block_win['o'] == opponent_curr:
             gain += 50
         elif self.count_block_win['p'] < player_curr and self.count_block_win['o'] < opponent_curr:
