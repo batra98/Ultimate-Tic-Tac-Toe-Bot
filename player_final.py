@@ -5,11 +5,11 @@ import time
 
 class Player_final:
 
-    def __init__(self):
+    def __init__(self,time):
 
         self.default = (0,4,4)
         self.max_depth = 2
-        self.Time_limit = 2
+        self.Time_limit = time
         self.symbol = None
         self.count_block_win = {'p': 0,'o': 0}
         self.next_move = (0,0,0)
