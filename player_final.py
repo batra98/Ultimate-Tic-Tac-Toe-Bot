@@ -9,7 +9,7 @@ class Player_final:
 
         self.default = (0,4,4)
         self.max_depth = 2
-        self.Time_limit = 5
+        self.Time_limit = 2
         self.symbol = None
         self.count_block_win = {'p': 0,'o': 0}
         self.next_move = (0,0,0)
@@ -28,8 +28,8 @@ class Player_final:
         else:
             opponent_symbol = 'o'
 
-        temp = gameboard.small_boards_status
-        print(temp[0])
+        temp = gameboard.big_boards_status
+        # print(temp)
 
         self.count_block_win['p'] = sum(blocks.count(player_symbol) for blocks in gameboard.small_boards_status[0])
         self.count_block_win['p'] += sum(blocks.count(player_symbol) for blocks in gameboard.small_boards_status[1])
@@ -62,9 +62,9 @@ class Player_final:
     def minimax(self, board, old_move, maxnode, player_flag, opponent_flag, depth, alpha, beta,best_board,best_row, best_col):
         if depth == self.max_depth:
             # print("in")
-            utility_gain = self.get_utility(board,player_flag,opponent_flag)
-            # print(utility_gain)
-            return (utility_gain,best_board,best_row,best_col)
+            utility_profit = self.get_utility(board,player_flag,opponent_flag)
+            # print(utility_profit)
+            return (utility_profit,best_board,best_row,best_col)
 
         else:
 
@@ -73,8 +73,8 @@ class Player_final:
             # print(available_moves)
 
             if len(available_moves) == 0:
-                utility_gain = self.get_utility(board,player_flag,opponent_flag)
-                return (utility_gain,best_board,best_row,best_col)
+                utility_profit = self.get_utility(board,player_flag,opponent_flag)
+                return (utility_profit,best_board,best_row,best_col)
 
             # print(depth)
             # counter = 0
@@ -135,8 +135,31 @@ class Player_final:
         
     
 
-    def get_utility(self, board,player_flag, opponent_flag):
-        gain = 0
+    def get_utility(self, board, player_flag, opponent_flag):
+
+        profit = 0
+
+        scale = 100.0
+        utility_block = [[0 for b in range(9)] for c in range(2)]
+        utility_board = [0 for c in range(2)]
+
+        for i in range(2):
+            my_board = board.big_boards_status[i]
+            for j in range(9):
+                utility_block[i][j] = self.check_pattern_block(my_board, j, player_flag, opponent_flag)
+                utility_block[i][j] /= scale
+
+        for i in range(2):
+            small_board = board.small_boards_status[i]
+            utility_board[i] = self.check_pattern_board(small_board, i, utility_block, player_flag, opponent_flag)
+
+        # for i in range(2):
+        #     print(utility_block[i])
+
+        # print("\n")
+
+
+
         temp_small = [item for sublist in board.small_boards_status for item in sublist]
 
         player_curr = sum(blocks.count(player_flag) for blocks in temp_small)
@@ -144,10 +167,249 @@ class Player_final:
 
         # print(self.count_block_win['p'],player_curr)
         if self.count_block_win['p'] < player_curr and self.count_block_win['o'] == opponent_curr:
-            gain += 50
+            profit += 50
         elif self.count_block_win['p'] < player_curr and self.count_block_win['o'] < opponent_curr:
-            gain -= 50
+            profit -= 50
         elif self.count_block_win['p'] < player_curr and (player_curr - self.count_block_win['p']) < (opponent_curr - self.count_block_win['o']):
-            gain -= 20
+            profit -= 20
 
-        return gain
+        return profit + utility_board[0] + utility_board[1]
+
+    def check_pattern_board(self, board, board_idx, utility_block, player_flag, opponent_flag):
+        
+        profit = 0
+
+        for itr_y in range(3):
+            util_val = 0
+            empty = 0
+            player = 0
+            enemy = 0
+            for itr_x in range(3):
+                util_val += utility_block[board_idx][itr_x * 3 + itr_y]
+                if board[itr_y][itr_x] == '-':
+                    empty += 1
+                elif board[itr_y][itr_x] == player_flag:
+                    player += 1
+                elif board[itr_y][itr_x] == opponent_flag:
+                    enemy += 1
+
+            profit += self.get_mult(util_val)
+            profit += self.calc_total(player, enemy)
+
+        for itr_x in range(3):
+            util_val = 0
+            empty = 0
+            player = 0
+            enemy = 0
+            for itr_y in range(3):
+                util_val += utility_block[board_idx][itr_x * 3 + itr_y]
+                if board[itr_y][itr_x] == '-':
+                    empty += 1
+                elif board[itr_y][itr_x] == player_flag:
+                    player += 1
+                elif board[itr_y][itr_x] == opponent_flag:
+                    enemy += 1
+
+            profit += self.get_mult(util_val)
+            profit += self.calc_total(player, enemy)
+
+        util_val = 0
+        empty = 0
+        player = 0
+        enemy = 0    
+
+        for itr in range(3):
+
+            util_val += utility_block[board_idx][itr * 3 + itr]
+
+            if board[itr][itr] == '-':
+                empty += 1
+            elif board[itr][itr] == player_flag:
+                player += 1
+            elif board[itr][itr] == opponent_flag:
+                enemy += 1
+
+        profit += self.get_mult(util_val)
+        profit += self.calc_total(player, enemy)
+
+        util_val = 0
+        empty = 0
+        player = 0
+        enemy = 0    
+
+        for itr in range(3):
+
+            util_val += utility_block[board_idx][itr * 2 + 2]
+            index_y = itr
+            index_x = 2 - itr
+
+            if board[index_y][index_x] == '-':
+                empty += 1
+            elif board[index_y][index_x] == player_flag:
+                player += 1
+            elif board[index_y][index_x] == opponent_flag:
+                enemy += 1
+
+        profit += self.get_mult(util_val)
+        profit += self.calc_total(player, enemy)
+
+        return profit    
+
+
+    def check_pattern_block(self, board, block_idx, player_flag, opponent_flag):
+        profit = 0
+
+        x_idx = ( block_idx % 3 ) * 3
+        y_idx = ( block_idx / 3 ) * 3
+
+        for itr_y in range(y_idx, y_idx + 3):
+            empty = 0
+            player = 0
+            enemy = 0
+    
+            for itr_x in range(x_idx, x_idx + 3):
+                if board[itr_y][itr_x] == '-':
+                    empty += 1
+                elif board[itr_y][itr_x] == player_flag:
+                    player += 1
+                elif board[itr_y][itr_x] == opponent_flag:
+                    enemy += 1
+
+            profit = self.calc_pattern(player, enemy, profit)
+
+        
+        for itr_x in range(x_idx, x_idx + 3):
+            empty = 0
+            player = 0
+            enemy = 0
+    
+            for itr_y in range(y_idx, y_idx + 3):
+                if board[itr_y][itr_x] == '-':
+                    empty += 1
+                elif board[itr_y][itr_x] == player_flag:
+                    player += 1
+                elif board[itr_y][itr_x] == opponent_flag:
+                    enemy += 1
+
+            profit = self.calc_pattern(player, enemy, profit)
+
+        empty = 0
+        player = 0
+        enemy = 0    
+
+        for itr in range(3):
+            index_y = y_idx + itr
+            index_x = x_idx + itr
+
+            if board[index_y][index_x] == '-':
+                empty += 1
+            elif board[index_y][index_x] == player_flag:
+                player += 1
+            elif board[index_y][index_x] == opponent_flag:
+                enemy += 1
+
+        profit = self.calc_pattern(player, enemy, profit)
+
+        empty = 0
+        player = 0
+        enemy = 0    
+
+        for itr in range(3):
+            index_y = y_idx + itr
+            index_x = x_idx + 2 - itr
+
+            if board[index_y][index_x] == '-':
+                empty += 1
+            elif board[index_y][index_x] == player_flag:
+                player += 1
+            elif board[index_y][index_x] == opponent_flag:
+                enemy += 1
+
+        profit = self.calc_pattern(player, enemy, profit)
+
+
+        return profit
+    
+
+
+    def calc_pattern(self, num_player, num_enemy, profit):
+
+        # print (num_player, num_enemy)
+        player_dict = {
+            0 : 0,
+            1 : 1,
+            2 : 10,
+            3 : 100,
+        }
+
+        enemy_dict = {
+            0 : 0,
+            1 : -1,
+            2 : -10,
+            3 : -100,
+        }
+        
+        profit += player_dict[num_player]
+        profit += enemy_dict[num_enemy]
+
+        return profit
+
+    def get_mult(self, util_val):
+        increment = 0
+
+        if util_val >= 3:
+            increment = 100
+            increment += (util_val - 3) * 900
+
+        if 2 <= util_val < 3:
+            increment = 10
+            increment += (util_val - 2) * 90
+
+        if 1 <= util_val < 2:
+            increment = 1
+            increment += (util_val - 1) * 9
+
+        if -1 <= util_val < 1:
+            increment = util_val
+
+        if -2 <= util_val < -1:
+            increment = -1
+            increment -= (abs(util_val) - 1) * 9
+
+        if -3 <= util_val < -2:
+            increment = -2
+            increment -= (abs(util_val) - 2) * 90
+
+        if util_val < -3:
+            increment = -100
+            increment -= (abs(util_val) - 3) * 900
+
+        return increment
+
+    def calc_total(self, num_player, num_enemy):
+        
+        increment = 0
+
+        player_dict = {
+            0 : 0,
+            1 : 10,
+            2 : 100,
+            3 : 1000,
+        }
+
+        enemy_dict = {
+            0 : 0,
+            1 : -10,
+            2 : -100,
+            3 : -1000,
+        }
+        
+        increment += player_dict[num_player]
+        increment += enemy_dict[num_enemy]
+
+        return increment
+
+        
+
+
+
